@@ -13,7 +13,7 @@
 require('dotenv').config({path:'../backend/.env'});
 const {Pool}=require('pg');
 
-const pool=new Pool({connectionString:process.env.DATABASE_URL,ssl:false});
+const pool=new Pool({connectionString:process.env.DATABASE_URL,ssl:{rejectUnauthorized:false}});
 
 const CATEGORIES=['Electronics','Clothing','Books','Home & Garden','Sports','Toys','Automotive','Food','Beauty','Office'];
 const ADJECTIVES=['Premium','Classic','Modern','Vintage','Sleek','Durable','Compact','Pro','Ultra','Lite'];
