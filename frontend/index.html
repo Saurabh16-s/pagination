@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>ProductStore — Browse Catalog</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+
+  :root{
+    --bg:#0e0f11;
+    --surface:#16181c;
+    --border:#262830;
+    --text:#e8e9ec;
+    --muted:#6b6f7c;
+    --accent:#4f7cff;
+    --accent-dim:#1e2d5c;
+    --green:#22c55e;
+    --yellow:#f59e0b;
+    --red:#ef4444;
+    --radius:6px;
+    --mono:'IBM Plex Mono',monospace;
+    --sans:'IBM Plex Sans',sans-serif;
+  }
+
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.5;min-height:100vh;}
+
+  header{
+    border-bottom:1px solid var(--border);
+    padding:16px 32px;
+    display:flex;
+    align-items:center;
+    gap:16px;
+    position:sticky;top:0;z-index:10;
+    background:var(--bg);
+  }
+  .logo{font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.05em;}
+  .logo span{color:var(--accent);}
+  .header-right{margin-left:auto;display:flex;align-items:center;gap:12px;}
+  .badge{
+    font-family:var(--mono);font-size:11px;padding:3px 8px;
+    border-radius:4px;background:var(--accent-dim);color:var(--accent);
+    display:flex;align-items:center;gap:5px;
+  }
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+
+  main{max-width:1200px;margin:0 auto;padding:24px 32px;}
+
+  .toolbar{
+    display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap;
+  }
+  .toolbar label{font-size:12px;color:var(--muted);font-weight:500;letter-spacing:.06em;text-transform:uppercase;}
+
+  select,input{
+    background:var(--surface);border:1px solid var(--border);color:var(--text);
+    font-family:var(--sans);font-size:13px;padding:7px 12px;border-radius:var(--radius);
+    outline:none;transition:border-color .15s;
+  }
+  select:focus,input:focus{border-color:var(--accent);}
+  select{cursor:pointer;appearance:none;padding-right:28px;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b6f7c' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 10px center;
+  }
+
+  .stat{font-family:var(--mono);font-size:12px;color:var(--muted);margin-left:auto;}
+  .stat strong{color:var(--text);}
+
+  /* Table */
+  .table-wrap{border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+  table{width:100%;border-collapse:collapse;}
+  thead tr{background:var(--surface);}
+  th{
+    font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--muted);font-weight:500;padding:10px 16px;text-align:left;
+    border-bottom:1px solid var(--border);white-space:nowrap;
+  }
+  tbody tr{border-bottom:1px solid var(--border);transition:background .1s;}
+  tbody tr:last-child{border-bottom:none;}
+  tbody tr:hover{background:var(--surface);}
+  td{padding:12px 16px;color:var(--text);font-size:13px;}
+  td.mono{font-family:var(--mono);font-size:12px;color:var(--muted);}
+
+  .cat-pill{
+    display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500;
+    background:var(--accent-dim);color:var(--accent);
+  }
+  .price{font-family:var(--mono);font-size:13px;font-weight:500;}
+
+  /* Pagination */
+  .pagination{margin-top:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+  .page-info{font-family:var(--mono);font-size:12px;color:var(--muted);}
+  .page-info strong{color:var(--text);}
+  .page-btns{display:flex;gap:8px;}
+  button{
+    background:var(--surface);border:1px solid var(--border);color:var(--text);
+    font-family:var(--sans);font-size:13px;padding:7px 16px;border-radius:var(--radius);
+    cursor:pointer;transition:all .15s;font-weight:500;
+  }
+  button:hover:not(:disabled){background:var(--border);border-color:var(--accent);color:var(--accent);}
+  button:disabled{opacity:.35;cursor:not-allowed;}
+  button.primary{background:var(--accent);border-color:var(--accent);color:#fff;}
+  button.primary:hover:not(:disabled){background:#3a6ae6;border-color:#3a6ae6;color:#fff;}
+
+  /* States */
+  .empty{text-align:center;padding:64px 16px;color:var(--muted);}
+  .empty svg{margin-bottom:12px;opacity:.3;}
+
+  .skeleton{animation:shimmer 1.2s infinite;}
+  @keyframes shimmer{0%{opacity:.4;}50%{opacity:.7;}100%{opacity:.4;}}
+  .skeleton td div{background:var(--border);border-radius:4px;height:14px;}
+  .skeleton td div.wide{width:70%;}
+  .skeleton td div.narrow{width:40%;}
+  .skeleton td div.tiny{width:25%;}
+
+  .error-bar{
+    background:#1f0a0a;border:1px solid #5c1a1a;color:var(--red);
+    padding:10px 16px;border-radius:var(--radius);margin-bottom:16px;font-size:13px;
+    display:none;
+  }
+
+  .live-badge{
+    font-family:var(--mono);font-size:11px;color:var(--muted);
+    display:flex;align-items:center;gap:6px;
+  }
+  .live-dot{width:6px;height:6px;border-radius:50%;background:var(--yellow);}
+
+  @media(max-width:700px){
+    header{padding:12px 16px;}
+    main{padding:16px;}
+    th:nth-child(1),td:nth-child(1){display:none;} /* hide ID on mobile */
+    th:nth-child(5),td:nth-child(5){display:none;} /* hide updated_at */
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">product<span>store</span> /catalog</div>
+  <div class="header-right">
+    <div class="badge"><span class="dot"></span>Live</div>
+  </div>
+</header>
+
+<main>
+  <div class="error-bar" id="errorBar"></div>
+
+  <div class="toolbar">
+    <label for="catFilter">Category</label>
+    <select id="catFilter">
+      <option value="">All categories</option>
+    </select>
+    <label for="pageSize">Per page</label>
+    <select id="pageSize">
+      <option value="20">20</option>
+      <option value="50">50</option>
+      <option value="100">100</option>
+    </select>
+    <div class="stat" id="stat"></div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Category</th>
+          <th>Price</th>
+          <th>Updated</th>
+          <th>Created</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <div class="pagination">
+    <div class="page-info" id="pageInfo"></div>
+    <div class="live-badge" id="liveBadge" style="display:none">
+      <span class="live-dot"></span>
+      Data may have changed — <a href="#" id="resetLink" style="color:var(--accent);text-decoration:none">Browse from latest</a>
+    </div>
+    <div class="page-btns">
+      <button id="prevBtn" disabled>← Prev</button>
+      <button id="nextBtn" disabled>Next →</button>
+    </div>
+  </div>
+</main>
+
+<script>
+// Config — update this to your deployed backend URL
+const API_BASE=window.API_BASE||'http://localhost:3000';
+
+// Cursor stack: index 0 = first page (no cursor), each push = next page cursor
+// This lets us go back by popping
+let cursorStack=[null]; // null = "fetch from beginning"
+let currentPage=0;
+let totalFetched=0;
+let hasMore=false;
+let loading=false;
+
+const tbody=document.getElementById('tbody');
+const prevBtn=document.getElementById('prevBtn');
+const nextBtn=document.getElementById('nextBtn');
+const catFilter=document.getElementById('catFilter');
+const pageSize=document.getElementById('pageSize');
+const statEl=document.getElementById('stat');
+const pageInfoEl=document.getElementById('pageInfo');
+const errorBar=document.getElementById('errorBar');
+const liveBadge=document.getElementById('liveBadge');
+
+function showError(msg){
+  errorBar.textContent=msg;
+  errorBar.style.display='block';
+  setTimeout(()=>{errorBar.style.display='none';},5000);
+}
+
+function fmtDate(iso){
+  const d=new Date(iso);
+  return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+}
+
+function fmtId(id){return id.slice(0,8)+'…';}
+
+function renderSkeleton(n=5){
+  tbody.innerHTML=Array.from({length:n},()=>`
+    <tr class="skeleton">
+      <td><div class="tiny"></div></td>
+      <td><div class="wide"></div></td>
+      <td><div class="narrow"></div></td>
+      <td><div class="tiny"></div></td>
+      <td><div class="narrow"></div></td>
+      <td><div class="narrow"></div></td>
+    </tr>`).join('');
+}
+
+function renderRows(products){
+  if(!products.length){
+    tbody.innerHTML=`<tr><td colspan="6"><div class="empty">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+      <div>No products found</div>
+    </div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML=products.map(p=>`
+    <tr>
+      <td class="mono">${fmtId(p.id)}</td>
+      <td>${p.name}</td>
+      <td><span class="cat-pill">${p.category}</span></td>
+      <td class="price">₹${parseFloat(p.price).toLocaleString('en-IN',{minimumFractionDigits:2})}</td>
+      <td class="mono">${fmtDate(p.updated_at)}</td>
+      <td class="mono">${fmtDate(p.created_at)}</td>
+    </tr>`).join('');
+}
+
+async function fetchPage(cursor){
+  loading=true;
+  prevBtn.disabled=true;
+  nextBtn.disabled=true;
+  renderSkeleton(parseInt(pageSize.value));
+
+  const params=new URLSearchParams({limit:pageSize.value});
+  if(catFilter.value) params.set('category',catFilter.value);
+  if(cursor) params.set('cursor',cursor);
+
+  try {
+    const res=await fetch(`${API_BASE}/products?${params}`);
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json=await res.json();
+
+    renderRows(json.data||[]);
+    hasMore=json.has_more;
+    totalFetched=(currentPage)*parseInt(pageSize.value)+(json.count||0);
+
+    // If this page has a next page, store its cursor
+    if(hasMore&&json.next_cursor){
+      // Only push if we're at the top of the stack (navigating forward)
+      if(currentPage===cursorStack.length-1){
+        cursorStack.push(json.next_cursor);
+      }
+    }
+
+    const pageNum=currentPage+1;
+    const from=currentPage*parseInt(pageSize.value)+1;
+    const to=from+(json.count||0)-1;
+    pageInfoEl.innerHTML=`Page <strong>${pageNum}</strong> &nbsp;·&nbsp; rows <strong>${from}–${to}</strong>`;
+    statEl.innerHTML=``;
+
+    prevBtn.disabled=currentPage===0;
+    nextBtn.disabled=!hasMore;
+  } catch(err){
+    showError('Failed to load products: '+err.message);
+    tbody.innerHTML=`<tr><td colspan="6" style="color:var(--red);text-align:center;padding:32px">Error loading data</td></tr>`;
+    prevBtn.disabled=currentPage===0;
+    nextBtn.disabled=true;
+  } finally {
+    loading=false;
+  }
+}
+
+function reset(){
+  cursorStack=[null];
+  currentPage=0;
+  liveBadge.style.display='none';
+  fetchPage(null);
+}
+
+prevBtn.addEventListener('click',()=>{
+  if(loading||currentPage===0) return;
+  currentPage--;
+  fetchPage(cursorStack[currentPage]);
+});
+
+nextBtn.addEventListener('click',()=>{
+  if(loading||!hasMore) return;
+  currentPage++;
+  fetchPage(cursorStack[currentPage]);
+});
+
+catFilter.addEventListener('change',reset);
+pageSize.addEventListener('change',reset);
+document.getElementById('resetLink').addEventListener('click',(e)=>{e.preventDefault();reset();});
+
+// Load categories
+async function loadCategories(){
+  try {
+    const res=await fetch(`${API_BASE}/products/categories`);
+    const cats=await res.json();
+    cats.forEach(c=>{
+      const opt=document.createElement('option');
+      opt.value=c;opt.textContent=c;
+      catFilter.appendChild(opt);
+    });
+  } catch {}
+}
+
+// Warn user if they've been browsing a while and data might have changed
+// (visual hint only — the cursor guarantees correctness regardless)
+let browseStart=Date.now();
+setInterval(()=>{
+  if(currentPage>0&&Date.now()-browseStart>60000){
+    liveBadge.style.display='flex';
+  }
+},10000);
+
+loadCategories();
+fetchPage(null);
+</script>
+</body>
+</html>
