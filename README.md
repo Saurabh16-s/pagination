@@ -4,8 +4,8 @@ A backend that lets someone browse ~200,000 products (newest first), filter by c
 
 ## Live URLs
 
-- **API:** `https://your-backend.onrender.com`
-- **Frontend:** `https://your-frontend.pages.dev` (or Vercel/Netlify)
+- **API:** `https://pagination-dysa.onrender.com`
+- **Frontend:** `https://pagination-three-sigma.vercel.app/` (or Vercel/Netlify)
 
 ---
 
